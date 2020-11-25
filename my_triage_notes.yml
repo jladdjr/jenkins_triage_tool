@@ -9,6 +9,11 @@ tests:
     label: failing
     description: we think the product has a genuine bug because ..
 
-  - name: test_bazzy
+  - name: test_baz
     description: have not looked into this yet
 
+  - name: test_bam
+    label: flake
+    description: diagnosed flake, see issue
+    links:
+      - http://github.com/user/my_repo/100

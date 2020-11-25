@@ -7,6 +7,7 @@ from pathlib import Path, PurePath
 import sys
 
 from junitparser import JUnitXml, Failure, Error
+from termcolor import cprint
 import yaml
 
 current_dir = Path()  # current dir
@@ -57,10 +58,21 @@ class TriagedTest(object):
     def description(self):
         return self.test.get('description').strip()
 
+    @property
+    def links(self):
+        return self.test.get('links', [])
+
     def __str__(self):
+        NAME_PAD_LEN = 40
+        DESC_PAD_LEN = 20
+
+        s = [self.name.ljust(NAME_PAD_LEN)]
         if self.description:
-            return f'{self.name:20}   {self.description}'
-        return f'{self.name}'
+            s.append(self.description.ljust(DESC_PAD_LEN))
+        if self.links:
+            for link in self.links:
+                s.append('\n' + (' ' * NAME_PAD_LEN) + '- ' + link)
+        return ''.join(s)
 
 class TestSet(object):
     def __init__(self, tests):
@@ -76,6 +88,9 @@ class TestSet(object):
 
     def __iter__(self):
         return self.tests.__iter__()
+
+    def __len__(self):
+        return len(self.tests)
 
 class TriageData(object):
     def __init__(self, path):
@@ -161,25 +176,36 @@ def list_failures_in_context(failures, triage_data):
     true_failures = get_failures_marked_with_label(failures, triage_data, label='failing')
     flakey_tests = get_failures_marked_with_label(failures, triage_data, label='flake')
 
-    print('Not Triaged')
-    for failure in untriaged_failures:
-        print(f'  {failure}')
-    print()
+    def print_failures(failures, pad_length=3, start_index=1, newline=True):
+        padding = ' ' * pad_length
+        if not len(failures):
+            print(padding + 'none')
+        else:
+            for index, failure in enumerate(failures, start=start_index):
+                s = str(failure)
+                for line in s.split('\n'):
+                    print(padding + line)
+                    first_line = False
+        if newline:
+            print()
 
-    print('Partially Triaged')
-    for failure in unlabeled_failures:
-        print(f'  {failure}')
-    print()
+    def print_title(title, color='white'):
+        cprint(title, color=color, attrs=['bold'])
 
-    print('True Failures')
-    for failure in true_failures:
-        print(f'  {failure}')
-    print()
+    print_title('Not Triaged', color='blue')
+    print_failures(untriaged_failures)
+    index = len(untriaged_failures) + 1
 
-    print('Flakey Tests')
-    for failure in flakey_tests:
-        print(f'  {failure}')
-    print()
+    print_title('Partially Triaged', color='yellow')
+    print_failures(unlabeled_failures, start_index=index)
+    index += len(unlabeled_failures)
+
+    print_title('True Failures', color='red')
+    print_failures(true_failures, start_index=index)
+    index += len(true_failures)
+
+    print_title('Flakey Tests', color='grey')
+    print_failures(flakey_tests, start_index=index)
 
 if __name__ == "__main__":
     # get triage notes
