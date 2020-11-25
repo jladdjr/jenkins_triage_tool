@@ -1,16 +1,12 @@
 ---
 name: My Sample Triage
 tests:
-  - name: test_foo
-    label: flake
-    description: test is flakey because ..
-  
   - name: test_bar
-    label: failing
-    description: we think the product has a genuine bug because ..
+    description: still digging into this ..
 
   - name: test_baz
-    description: have not looked into this yet
+    label: failing
+    description: we think the product has a genuine bug because ..
 
   - name: test_bam
     label: flake
